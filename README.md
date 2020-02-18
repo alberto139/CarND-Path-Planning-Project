@@ -5,12 +5,8 @@ Self-Driving Car Engineer Nanodegree Program
 
 At every time step the car cosiders 3 possible trajectories (one for each lane).
 The cost of being in each lane is calculated in order to decide the <b>"best lane"</b>. The cost function is as follows:
-
-- <img src="https://latex.codecogs.com/gif.latex?s=\text { sensor reading }  " /> 
-
-```math
-SE = \frac{\sigma}{\sqrt{n}}
-```
+ 
+ <i>SUM (car<sub>i</sub>)></i>
    
 ### Simulator.
 You can download the Term3 Simulator which contains the Path Planning Project from the [releases tab (https://github.com/udacity/self-driving-car-sim/releases/tag/T3_v1.2).  
