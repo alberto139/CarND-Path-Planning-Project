@@ -1,5 +1,12 @@
 # CarND-Path-Planning-Project
 Self-Driving Car Engineer Nanodegree Program
+
+### Generating Paths
+
+At every time step the car cosiders 3 possible trajectories (one for each lane).
+The cost of being in each lane is calculated in order to decide the <b>"best lane"<b>. The cost function is as follows:
+
+\sum\limits_{i=1}^n i^2 = \frac{n(n+1)(2n+1)}{6}
    
 ### Simulator.
 You can download the Term3 Simulator which contains the Path Planning Project from the [releases tab (https://github.com/udacity/self-driving-car-sim/releases/tag/T3_v1.2).  

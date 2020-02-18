@@ -57,10 +57,12 @@ int main() {
 
    // starting lane
   int lane = 1;
+
+  double max_speed = 47;
   // reference target velocity
   double ref_vel = 0; // mph
 
-  h.onMessage([&ref_vel, &lane, &map_waypoints_x,&map_waypoints_y,&map_waypoints_s,
+  h.onMessage([&max_speed ,&ref_vel, &lane, &map_waypoints_x,&map_waypoints_y,&map_waypoints_s,
                &map_waypoints_dx,&map_waypoints_dy]
               (uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
                uWS::OpCode opCode) {
@@ -120,9 +122,9 @@ int main() {
           double best_cost = 99.9;
           double best_lane = 6;
           double costs [3] = {0,0,0};
+          bool change_ok = 1;
           for (int i=0; i<3; i++)
           {
-            double cost = 0;
             double temp_d = i;
 
             for (auto car = sensor_fusion.begin(); car < sensor_fusion.end(); car ++)
@@ -133,18 +135,21 @@ int main() {
             double other_car_y_vel = car[0][1];
             
               if ((other_car_d - 2 < ((temp_d*4) + 2) && other_car_d  + 2 > ((temp_d*4) + 2))  
-                  && (other_car_s - car_s <= 50) && (other_car_s - car_s > -10))
+                  && (other_car_s - car_s <= 40) && (other_car_s - car_s > - 20))
                   {
-                    cost += 1;
+
+                    //costs[i] += 2 / (other_car_s - car_s) ;
                     costs[i] += 1;
                   }
             }
-            if (cost < best_cost)
+            if (costs[i] < best_cost)
             {
-              best_cost = cost;
+             
+
+              best_cost = costs[i];
               best_lane = i;
             }
-            cout << "lane " << i << " cost: " << cost << endl;
+       
             
           }
           
@@ -154,9 +159,40 @@ int main() {
             best_lane = 1;
           }
 
-          cout << costs[1] << endl;
+          for (int i=0; i < 3; i++)
+          {
+            cout << i << ": " << costs[i] << endl;
+          }
           cout << "best_lane: " << best_lane << endl;
-          lane =  best_lane;
+
+          if (fabs(lane - best_lane) <= 1 && ref_vel > 40)
+          {
+             // check if there is a car directly next to you
+            for (auto car = sensor_fusion.begin(); car < sensor_fusion.end(); car ++)
+            {
+              double other_car_d = car[0][6];
+              double other_car_s = car[0][5];
+              double other_car_x_vel = car[0][1];
+              double other_car_y_vel = car[0][1];
+
+              // if car is really close and on my target lane, do not change
+              if ((other_car_d - 2 < ((best_lane*4) + 2) && other_car_d  + 2 > ((best_lane*4) + 2))  
+              && (other_car_s - car_s <= 10) && (other_car_s - car_s > - 10))
+              {
+                // too close, don't change
+                change_ok = 0;
+              }
+            }
+            
+            if (change_ok)
+            {
+              double diff = best_lane - lane;
+              lane =  best_lane;
+            }
+
+            
+          }
+          
           cout << lane << endl;
 
 
@@ -166,12 +202,14 @@ int main() {
           // car's y velocity in m/s, car's s position in frenet coordinates, 
           // car's d position in frenet coordinates
           bool slow_down = 0;
+          double closest_car_speed;
           for (auto car = sensor_fusion.begin(); car < sensor_fusion.end(); car ++)
           {
             double other_car_d = car[0][6];
             double other_car_s = car[0][5];
             double other_car_x_vel = car[0][1];
             double other_car_y_vel = car[0][1];
+            double other_car_speed = sqrt(other_car_x_vel*other_car_x_vel + other_car_y_vel*other_car_y_vel);
 
             
 
@@ -193,18 +231,29 @@ int main() {
               cout << "MYcar D: " << car_d << endl;
 
               // if they are slower than me slow down
+              if ((other_car_d - 1 < car_d && other_car_d  + 1 > car_d)  
+                && (other_car_s - car_s <= 15) && (other_car_s - car_s > 0))
+                {
+                  closest_car_speed = sqrt(other_car_x_vel*other_car_x_vel + other_car_y_vel*other_car_y_vel);
+                }
+
          
               slow_down = 1;
-              if (ref_vel > 5)
-              {
-              ref_vel -= 1;
-              }
             }
           }
-          if (slow_down == 0 && ref_vel < 47){
+          if (slow_down == 0 && ref_vel < max_speed){
             ref_vel +=1;
             cout << "speeding up" << endl;
           }
+          else
+          {
+            if (slow_down && ref_vel > closest_car_speed + 5)
+              {
+              ref_vel -= 0.33;
+              cout << "slowing down" << endl;
+              }
+          }
+          
         
 
 
@@ -300,14 +349,14 @@ int main() {
           }
 
           // calculate how to break up the spline points so that we travel at our desired reference velocity
-          double target_x = 70; // largest x in the spline
+          double target_x = 50; // largest x in the spline
           double target_y = s(target_x);
           double target_dist = sqrt((target_x)*(target_x)+(target_y)*(target_y));
           double x_add_on = 0;
 
 
           // fill up the rest of our path planner 
-          for (int i=0; i <= 70-previous_path_x.size(); i++)
+          for (int i=0; i <= 50-previous_path_x.size(); i++)
           {
             double N = (target_dist/(0.02*ref_vel/2.24));
             double x_point = x_add_on+(target_x)/N;
