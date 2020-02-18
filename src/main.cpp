@@ -207,8 +207,8 @@ int main() {
           {
             double other_car_d = car[0][6];
             double other_car_s = car[0][5];
-            double other_car_x_vel = car[0][1];
-            double other_car_y_vel = car[0][1];
+            double other_car_x_vel = car[0][3];
+            double other_car_y_vel = car[0][4];
             double other_car_speed = sqrt((other_car_x_vel*other_car_x_vel) + (other_car_y_vel*other_car_y_vel));
 
             
@@ -246,11 +246,15 @@ int main() {
             cout << "speeding up" << endl;
           }
  
-          if (slow_down && (ref_vel > closest_car_speed + 10))
+          else if (slow_down && ref_vel > 25)
             {
-            ref_vel -= 0.2;
+            ref_vel -= 1;
             cout << "slowing down" << endl;
             }
+
+          if (ref_vel < 0.01){
+            ref_vel += 1;
+          }
           
           
         
