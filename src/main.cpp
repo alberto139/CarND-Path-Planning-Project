@@ -58,7 +58,7 @@ int main() {
    // starting lane
   int lane = 1;
   // reference target velocity
-  double ref_vel = 49.5; // mph
+  double ref_vel = 0; // mph
 
   h.onMessage([&ref_vel, &lane, &map_waypoints_x,&map_waypoints_y,&map_waypoints_s,
                &map_waypoints_dx,&map_waypoints_dy]
@@ -99,8 +99,117 @@ int main() {
           auto sensor_fusion = j[1]["sensor_fusion"];
 
           json msgJson;
-
           
+
+
+          // Decide Trajectory via a cost function
+          // Possible trajectories
+
+            // 1. Stay on current lane, maintain speed
+            //if (car[0][5] )
+            // 2. Stay on current lane, slow down
+            // 3. Stay on current lane, speed up
+            // 4. Change lane left, keep speed
+            // 5. Change lane left, slow down
+            // 6. Change lane left, speed up
+            // 7. Change lane right, keep speed
+            // 8. Change lane right, slow down
+            // 9. Change lane right, speed up
+
+          // chose best lane
+          double best_cost = 99.9;
+          double best_lane = 6;
+          double costs [3] = {0,0,0};
+          for (int i=0; i<3; i++)
+          {
+            double cost = 0;
+            double temp_d = i;
+
+            for (auto car = sensor_fusion.begin(); car < sensor_fusion.end(); car ++)
+            {
+            double other_car_d = car[0][6];
+            double other_car_s = car[0][5];
+            double other_car_x_vel = car[0][1];
+            double other_car_y_vel = car[0][1];
+            
+              if ((other_car_d - 2 < ((temp_d*4) + 2) && other_car_d  + 2 > ((temp_d*4) + 2))  
+                  && (other_car_s - car_s <= 50) && (other_car_s - car_s > -10))
+                  {
+                    cost += 1;
+                    costs[i] += 1;
+                  }
+            }
+            if (cost < best_cost)
+            {
+              best_cost = cost;
+              best_lane = i;
+            }
+            cout << "lane " << i << " cost: " << cost << endl;
+            
+          }
+          
+          
+          if (costs[1] == 0)
+          {
+            best_lane = 1;
+          }
+
+          cout << costs[1] << endl;
+          cout << "best_lane: " << best_lane << endl;
+          lane =  best_lane;
+          cout << lane << endl;
+
+
+          //["sensor_fusion"] A 2d vector of cars and then that car's 
+          // [car's unique ID, car's x position in map coordinates, 
+          // car's y position in map coordinates, car's x velocity in m/s, 
+          // car's y velocity in m/s, car's s position in frenet coordinates, 
+          // car's d position in frenet coordinates
+          bool slow_down = 0;
+          for (auto car = sensor_fusion.begin(); car < sensor_fusion.end(); car ++)
+          {
+            double other_car_d = car[0][6];
+            double other_car_s = car[0][5];
+            double other_car_x_vel = car[0][1];
+            double other_car_y_vel = car[0][1];
+
+            
+
+            // There are cars close to me
+            if ((other_car_d - 2 < car_d && other_car_d  + 2 > car_d)  
+                && (other_car_s - car_s <= 30) && (other_car_s - car_s > 0))
+            {
+              cout << "---------------------------------" << endl;
+              cout << (other_car_s - car_s) << endl;
+              cout << (other_car_s - car_s <= 20) << endl;
+              cout << "car ID: " << car[0][0] << endl;
+              cout << "car X: " << car[0][1] << endl;
+              cout << "car Y: " << car[0][2] << endl;
+              cout << "car X Vel: " << car[0][3] << endl;
+              cout << "car Y Vel: " << car[0][4] << endl;
+              cout << "car S: " << other_car_s << endl;
+              cout << "MYcar S: " << car_s << endl;
+              cout << "car D: " << other_car_d << endl;
+              cout << "MYcar D: " << car_d << endl;
+
+              // if they are slower than me slow down
+         
+              slow_down = 1;
+              if (ref_vel > 5)
+              {
+              ref_vel -= 1;
+              }
+            }
+          }
+          if (slow_down == 0 && ref_vel < 47){
+            ref_vel +=1;
+            cout << "speeding up" << endl;
+          }
+        
+
+
+
+          /////////////////////////////// LANE FOLLOWING /////////////////////////////
 
           // create a list of widely spaced waypoints
           // these will me used to make a spline
@@ -145,18 +254,22 @@ int main() {
           //In Frenet add evenly 30m spaced points ahead of the starting reference
 
           // Get 3 waiy points ahead of the starting reference
-          double buffer = 220;
-          vector<double> next_wp0 = getXY(car_s+buffer,(2+4*lane),map_waypoints_s,map_waypoints_x,map_waypoints_y);
-          vector<double> next_wp1 = getXY(car_s+buffer*2,(2+4*lane),map_waypoints_s,map_waypoints_x,map_waypoints_y);
-          vector<double> next_wp2 = getXY(car_s+buffer*3,(2+4*lane),map_waypoints_s,map_waypoints_x,map_waypoints_y);
+          //double buffer = 30;
+          double distance_buffer = 50;
+          vector<double> next_wp0 = getXY(car_s+distance_buffer,(2+4*lane),map_waypoints_s,map_waypoints_x,map_waypoints_y);
+          vector<double> next_wp1 = getXY(car_s+distance_buffer*2,(2+4*lane),map_waypoints_s,map_waypoints_x,map_waypoints_y);
+          vector<double> next_wp2 = getXY(car_s+distance_buffer*3,(2+4*lane),map_waypoints_s,map_waypoints_x,map_waypoints_y);
+          vector<double> next_wp3 = getXY(car_s+distance_buffer*4,(2+4*lane),map_waypoints_s,map_waypoints_x,map_waypoints_y);
 
           pts_x.push_back(next_wp0[0]);
           pts_x.push_back(next_wp1[0]);
           pts_x.push_back(next_wp2[0]);
+          pts_x.push_back(next_wp3[0]);
 
           pts_y.push_back(next_wp0[1]);
           pts_y.push_back(next_wp1[1]);
           pts_y.push_back(next_wp2[1]);
+          pts_y.push_back(next_wp3[1]);
 
           // rotate to match the car reference
           for (int i=0; i<pts_x.size(); i++)
@@ -187,14 +300,14 @@ int main() {
           }
 
           // calculate how to break up the spline points so that we travel at our desired reference velocity
-          double target_x = buffer; // largest x in the spline
+          double target_x = 70; // largest x in the spline
           double target_y = s(target_x);
           double target_dist = sqrt((target_x)*(target_x)+(target_y)*(target_y));
           double x_add_on = 0;
 
 
           // fill up the rest of our path planner 
-          for (int i=0; i <= 50-previous_path_x.size(); i++)
+          for (int i=0; i <= 70-previous_path_x.size(); i++)
           {
             double N = (target_dist/(0.02*ref_vel/2.24));
             double x_point = x_add_on+(target_x)/N;
@@ -218,43 +331,11 @@ int main() {
           }
 
      
-
-          
-
-
-          /**
-           * TODO: define a path made up of (x,y) points that the car will visit
-           *   sequentially every .02 seconds
-           */
-
-          /*
-          vector<double> next_x_vals;
-          vector<double> next_y_vals;
-          
-          double dist_inc = 0.25;
-          for (int i = 0; i< 100; i++)
-          {
-            // GO STRAIGHT //
-            //next_x_vals.push_back(car_x + (dist_inc * i) * cos(deg2rad(car_yaw)));
-            //next_y_vals.push_back(car_y + (dist_inc * i) * sin(deg2rad(car_yaw)));
-
-            // FOLLOW LANE //
-            // stay in lane using fernet coordinates
-            // follwoing the lanes is just setting the next x, y to the location of the next waypoint
-            double next_s = car_s + (dist_inc * i);
-            double next_d = car_d;
-            
-            // transform from frenet to cartesian
-            vector<double> xy = getXY(next_s, next_d, map_waypoints_s, map_waypoints_x, map_waypoints_y);
-            next_x_vals.push_back(xy[0]);
-            next_y_vals.push_back(xy[1]);
-          }
-          
-
-
           msgJson["next_x"] = next_x_vals;
           msgJson["next_y"] = next_y_vals;
-          */
+
+          /////////////////////////////// END LANE FOLLOWING /////////////////////////////
+          
 
           auto msg = "42[\"control\","+ msgJson.dump()+"]";
 
