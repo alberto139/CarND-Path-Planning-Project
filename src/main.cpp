@@ -165,7 +165,7 @@ int main() {
           }
           cout << "best_lane: " << best_lane << endl;
 
-          if (fabs(lane - best_lane) <= 1 && ref_vel > 40)
+          if (fabs(lane - best_lane) <= 1 && ref_vel > 30)
           {
              // check if there is a car directly next to you
             for (auto car = sensor_fusion.begin(); car < sensor_fusion.end(); car ++)
@@ -209,7 +209,7 @@ int main() {
             double other_car_s = car[0][5];
             double other_car_x_vel = car[0][1];
             double other_car_y_vel = car[0][1];
-            double other_car_speed = sqrt(other_car_x_vel*other_car_x_vel + other_car_y_vel*other_car_y_vel);
+            double other_car_speed = sqrt((other_car_x_vel*other_car_x_vel) + (other_car_y_vel*other_car_y_vel));
 
             
 
@@ -218,9 +218,8 @@ int main() {
                 && (other_car_s - car_s <= 30) && (other_car_s - car_s > 0))
             {
               cout << "---------------------------------" << endl;
-              cout << (other_car_s - car_s) << endl;
-              cout << (other_car_s - car_s <= 20) << endl;
               cout << "car ID: " << car[0][0] << endl;
+              cout << "speed: " << other_car_speed << endl;
               cout << "car X: " << car[0][1] << endl;
               cout << "car Y: " << car[0][2] << endl;
               cout << "car X Vel: " << car[0][3] << endl;
@@ -235,6 +234,7 @@ int main() {
                 && (other_car_s - car_s <= 15) && (other_car_s - car_s > 0))
                 {
                   closest_car_speed = sqrt(other_car_x_vel*other_car_x_vel + other_car_y_vel*other_car_y_vel);
+                  cout << "closest_car_speed: " << closest_car_speed << endl;
                 }
 
          
@@ -245,14 +245,13 @@ int main() {
             ref_vel +=1;
             cout << "speeding up" << endl;
           }
-          else
-          {
-            if (slow_down && ref_vel > closest_car_speed + 5)
-              {
-              ref_vel -= 0.33;
-              cout << "slowing down" << endl;
-              }
-          }
+ 
+          if (slow_down && (ref_vel > closest_car_speed + 10))
+            {
+            ref_vel -= 0.2;
+            cout << "slowing down" << endl;
+            }
+          
           
         
 

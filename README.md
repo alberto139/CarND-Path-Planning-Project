@@ -6,7 +6,20 @@ Self-Driving Car Engineer Nanodegree Program
 At every time step the car cosiders 3 possible trajectories (one for each lane).
 The cost of being in each lane is calculated in order to decide the <b>"best lane"</b>. The cost function is as follows:
  
- <i>SUM (car<sub>i</sub>)></i>
+ <i>Cost<sub>Lane</sub> = SUM (car<sub>i</sub>), for each car within range</i>
+
+ Cars within range are those closer than 30 meter from the from of the car or 20 meters from the back of the car. Ideally the cost should be proportional to how close the other vehicles are to the car, but this function does well enough for our purpose. 
+
+ The lane with the lowest cost is assigned as the best lane. If all lanes have the same cost, the middle lane is preffered. If we are not currently in the best lane we will switch to it only if the following conditions are met:
+ - the <b>best lane</b> is only 1 lane away from the <b>current lane</b>
+ - the <b>best lane</b> doesn't have any cars 10 meters ahead or behind our current position
+ - Our speed is at least 30 mph
+
+ If the conditions are not met we will stay in our current lane until they are.
+
+ The rest of the logic follows that described in the FAQ video for the project. 
+
+
    
 ### Simulator.
 You can download the Term3 Simulator which contains the Path Planning Project from the [releases tab (https://github.com/udacity/self-driving-car-sim/releases/tag/T3_v1.2).  
