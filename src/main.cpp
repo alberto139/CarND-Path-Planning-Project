@@ -177,12 +177,12 @@ int main() {
 
           // Only consider changing lanes if the best lane is next to the current lane
           int best_lane_int = int(round(best_lane));
-          if (fabs(diff) <= 1.2 && fabs(diff) >= 0.001 && ref_vel > 40 && all_clear && costs[best_lane_int] < 0.5)
+          if (fabs(diff) <= 1.2 && fabs(diff) >= 0.001 && ref_vel > 40 && costs[best_lane_int] < 0.6)
           {
-            lane += diff * 0.08;
+            lane += diff * 0.07;
           }
 
-          if (fabs(diff) <= 0.3 && fabs(diff) >= 0.001)
+          else if (fabs(diff) <= 0.3 && fabs(diff) >= 0.001)
           {
             cout << "centering..." << endl;
             lane += diff * 0.07;
@@ -243,14 +243,14 @@ int main() {
 
             // There are cars close to me
             if ((sother_car_d - 2 < car_d && sother_car_d  + 2 > car_d)  
-                && (sother_car_s - car_s <= 40) && (sother_car_s - car_s > 0))
+                && (sother_car_s - car_s <= 30) && (sother_car_s - car_s > 0))
             {
               closest_car_speed = sother_car_speed; // This isn't supper accurate
               all_clear = 0;
             }
             
             if ((sother_car_d - 3 < car_d && sother_car_d  + 3 > car_d)  
-                && (sother_car_s - car_s <= 25) && (sother_car_s - car_s > 0))
+                && (sother_car_s - car_s <= 20) && (sother_car_s - car_s > 0))
             {
               slow_down = 1;
               
@@ -269,14 +269,14 @@ int main() {
           }
  
          // Slow down
-          else if (slow_down && ref_vel + 2 >= closest_car_speed)
+          else if (slow_down && ref_vel + 1 >= closest_car_speed)
             {
             ref_vel -= .8;
             }
 
-          if (closest_car_speed < 0.01 && ref_vel < max_speed){
-            ref_vel += 1;
-          }
+          //if (closest_car_speed < 0.01 && ref_vel < max_speed){
+          //  ref_vel += 1;
+          //}
           cout << "closest_car_speed: " << closest_car_speed << endl;
           cout << "ref_vel: " << ref_vel << endl;
           
