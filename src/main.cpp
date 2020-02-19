@@ -205,6 +205,7 @@ int main() {
             cout << "Best Lane: " << best_lane << endl;
             cout << "Cur Lane: " << lane << endl;
             cout << "Diff: " << diff << endl;
+            cout << "Cost of Best: " << costs[best_lane_int] << endl;
 
           }
 
@@ -242,14 +243,14 @@ int main() {
 
             // There are cars close to me
             if ((sother_car_d - 2 < car_d && sother_car_d  + 2 > car_d)  
-                && (sother_car_s - car_s <= 35) && (sother_car_s - car_s > 0))
+                && (sother_car_s - car_s <= 40) && (sother_car_s - car_s > 0))
             {
               closest_car_speed = sother_car_speed; // This isn't supper accurate
               all_clear = 0;
             }
             
-            if ((sother_car_d - 1 < car_d && sother_car_d  + 1 > car_d)  
-                && (sother_car_s - car_s <= 20) && (sother_car_s - car_s > 0))
+            if ((sother_car_d - 3 < car_d && sother_car_d  + 3 > car_d)  
+                && (sother_car_s - car_s <= 25) && (sother_car_s - car_s > 0))
             {
               slow_down = 1;
               
