@@ -56,13 +56,17 @@ int main() {
   }
 
    // starting lane
-  int lane = 1;
-
-  double max_speed = 47;
+  double lane = 1;
+  double best_lane = 1;
+  double max_speed = 49;
   // reference target velocity
   double ref_vel = 0; // mph
+  bool in_lane_change = 0;
+  bool debug = 0;
+  bool all_clear = 1;
 
-  h.onMessage([&max_speed ,&ref_vel, &lane, &map_waypoints_x,&map_waypoints_y,&map_waypoints_s,
+
+  h.onMessage([&all_clear, &debug, &in_lane_change, &best_lane, &max_speed ,&ref_vel, &lane, &map_waypoints_x,&map_waypoints_y,&map_waypoints_s,
                &map_waypoints_dx,&map_waypoints_dy]
               (uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
                uWS::OpCode opCode) {
@@ -102,31 +106,26 @@ int main() {
 
           json msgJson;
           
-
-
           // Decide Trajectory via a cost function
           // Possible trajectories
 
-            // 1. Stay on current lane, maintain speed
-            //if (car[0][5] )
-            // 2. Stay on current lane, slow down
-            // 3. Stay on current lane, speed up
-            // 4. Change lane left, keep speed
-            // 5. Change lane left, slow down
-            // 6. Change lane left, speed up
-            // 7. Change lane right, keep speed
-            // 8. Change lane right, slow down
-            // 9. Change lane right, speed up
 
-          // chose best lane
+          // variables fo lane change
           double best_cost = 99.9;
-          double best_lane = 6;
+          double best_lane = 1; // the middle lane
           double costs [3] = {0,0,0};
           bool change_ok = 1;
+
+          //////////////////////////////////// COST FUNCTION //////////////////////////////////////
+          //////////////////////////////////// COST FUNCTION //////////////////////////////////////
+          //////////////////////////////////// COST FUNCTION //////////////////////////////////////
+
+          // Calculate cost for each lane
           for (int i=0; i<3; i++)
           {
             double temp_d = i;
 
+            // If a car is in this lane add it to the cost
             for (auto car = sensor_fusion.begin(); car < sensor_fusion.end(); car ++)
             {
             double other_car_d = car[0][6];
@@ -135,65 +134,79 @@ int main() {
             double other_car_y_vel = car[0][1];
             
               if ((other_car_d - 2 < ((temp_d*4) + 2) && other_car_d  + 2 > ((temp_d*4) + 2))  
-                  && (other_car_s - car_s <= 40) && (other_car_s - car_s > - 20))
+                  && (other_car_s - car_s <= 40) && (other_car_s - car_s > - 15))
                   {
-
-                    //costs[i] += 2 / (other_car_s - car_s) ;
-                    costs[i] += 1;
+                    // Modified sigmoid function. The closser the car, the higher the cost
+                    double x = abs(other_car_s - car_s );
+                    costs[i] += (-1/ (1+ ( exp(-(0.25*x)+5)))) + 1; 
                   }
             }
+
+            // Keep track of the best cost
             if (costs[i] < best_cost)
             {
-             
-
               best_cost = costs[i];
               best_lane = i;
-            }
-       
-            
+            } 
           }
           
-          
+          // Preference for the middle lane
           if (costs[1] == 0)
           {
             best_lane = 1;
           }
 
-          for (int i=0; i < 3; i++)
-          {
-            cout << i << ": " << costs[i] << endl;
-          }
-          cout << "best_lane: " << best_lane << endl;
-
-          if (fabs(lane - best_lane) <= 1 && ref_vel > 30)
-          {
-             // check if there is a car directly next to you
-            for (auto car = sensor_fusion.begin(); car < sensor_fusion.end(); car ++)
-            {
-              double other_car_d = car[0][6];
-              double other_car_s = car[0][5];
-              double other_car_x_vel = car[0][1];
-              double other_car_y_vel = car[0][1];
-
-              // if car is really close and on my target lane, do not change
-              if ((other_car_d - 2 < ((best_lane*4) + 2) && other_car_d  + 2 > ((best_lane*4) + 2))  
-              && (other_car_s - car_s <= 10) && (other_car_s - car_s > - 10))
-              {
-                // too close, don't change
-                change_ok = 0;
-              }
-            }
-            
-            if (change_ok)
-            {
-              double diff = best_lane - lane;
-              lane =  best_lane;
-            }
+          ///////////////////////////////////// END COST FUNCTION ///////////////////////////////////
+          ///////////////////////////////////// END COST FUNCTION ///////////////////////////////////
+          ///////////////////////////////////// END COST FUNCTION ///////////////////////////////////
 
             
-          }
+          ////////////////////////////// LANE CHANGE ///////////////////////////////////////////
+          ////////////////////////////// LANE CHANGE ///////////////////////////////////////////
+          ////////////////////////////// LANE CHANGE ///////////////////////////////////////////
+          // Calculate difference between current lane and the best lane
+          double diff = double(best_lane) - double(lane);
           
-          cout << lane << endl;
+
+          // Only consider changing lanes if the best lane is next to the current lane
+          if (fabs(diff) <= 1.2 && fabs(diff) >= 0.001 && ref_vel > 40 && all_clear)
+          {
+            lane += diff * 0.07;
+          }
+
+          ///////////// DEBUG /////////////
+          ///////////// DEBUG /////////////
+          ///////////// DEBUG /////////////
+
+          
+
+          if (true)
+          {
+            cout << "-------------------------------" << endl;
+            cout << "Costs:  " << endl;
+            for (int i=0; i < 3; i++)
+            {
+              cout << i << ": " << costs[i] << endl;
+            }
+            cout << "Best Lane: " << best_lane << endl;
+            cout << "Cur Lane: " << lane << endl;
+            cout << "Diff: " << diff << endl;
+
+          }
+
+
+
+          ///////////// DEBUG /////////////
+          ///////////// DEBUG /////////////
+          ///////////// DEBUG /////////////
+          
+
+          ////////////////////////////// END LANE CHANGE ///////////////////////////////////////////
+          ////////////////////////////// END LANE CHANGE ///////////////////////////////////////////
+          ////////////////////////////// END LANE CHANGE ///////////////////////////////////////////
+          
+          
+          //cout << lane << endl;
 
 
           //["sensor_fusion"] A 2d vector of cars and then that car's 
@@ -202,64 +215,65 @@ int main() {
           // car's y velocity in m/s, car's s position in frenet coordinates, 
           // car's d position in frenet coordinates
           bool slow_down = 0;
-          double closest_car_speed;
+          double closest_car_speed = max_speed;
           for (auto car = sensor_fusion.begin(); car < sensor_fusion.end(); car ++)
           {
-            double other_car_d = car[0][6];
-            double other_car_s = car[0][5];
-            double other_car_x_vel = car[0][3];
-            double other_car_y_vel = car[0][4];
-            double other_car_speed = sqrt((other_car_x_vel*other_car_x_vel) + (other_car_y_vel*other_car_y_vel));
+            double sother_car_id = car[0][0];
+            double sother_car_d = car[0][6];
+            double sother_car_s = car[0][5];
+            double sother_car_x_vel = car[0][3];
+            double sother_car_y_vel = car[0][4];
+            double sother_car_speed = sqrt((sother_car_x_vel*sother_car_x_vel) + (sother_car_y_vel*sother_car_y_vel)) * 2;
 
             
 
             // There are cars close to me
-            if ((other_car_d - 2 < car_d && other_car_d  + 2 > car_d)  
-                && (other_car_s - car_s <= 30) && (other_car_s - car_s > 0))
+
+
+            if ((sother_car_d - 2 < car_d && sother_car_d  + 2 > car_d)  
+                && (sother_car_s - car_s <= 35) && (sother_car_s - car_s > 0))
             {
-              cout << "---------------------------------" << endl;
-              cout << "car ID: " << car[0][0] << endl;
-              cout << "speed: " << other_car_speed << endl;
-              cout << "car X: " << car[0][1] << endl;
-              cout << "car Y: " << car[0][2] << endl;
-              cout << "car X Vel: " << car[0][3] << endl;
-              cout << "car Y Vel: " << car[0][4] << endl;
-              cout << "car S: " << other_car_s << endl;
-              cout << "MYcar S: " << car_s << endl;
-              cout << "car D: " << other_car_d << endl;
-              cout << "MYcar D: " << car_d << endl;
+              closest_car_speed = sother_car_speed;
+              
+              //slow_down = 1;
+            }
+            
 
-              // if they are slower than me slow down
-              if ((other_car_d - 1 < car_d && other_car_d  + 1 > car_d)  
-                && (other_car_s - car_s <= 15) && (other_car_s - car_s > 0))
-                {
-                  closest_car_speed = sqrt(other_car_x_vel*other_car_x_vel + other_car_y_vel*other_car_y_vel);
-                  cout << "closest_car_speed: " << closest_car_speed << endl;
-                }
 
-         
+
+            if ((sother_car_d - 1 < car_d && sother_car_d  + 1 > car_d)  
+                && (sother_car_s - car_s <= 20) && (sother_car_s - car_s > 0))
+            {
+              //closest_car_speed = sother_car_speed;
               slow_down = 1;
+              all_clear = 0;
+            }
+            else
+            {
+              all_clear = 1;
             }
           }
-          if (slow_down == 0 && ref_vel < max_speed){
+
+          if (slow_down == 0 && ref_vel < max_speed && ref_vel < closest_car_speed){
             ref_vel +=1;
-            cout << "speeding up" << endl;
+            //cout << "speeding up" << endl;
           }
  
-          else if (slow_down && ref_vel > 25)
+          // slow down util we match the speed of the closest car in front of us
+          else if (slow_down && ref_vel + 2 >= closest_car_speed)
             {
-            ref_vel -= 1;
-            cout << "slowing down" << endl;
+            ref_vel -= .8;
+
+             
+            //cout << "slowing down" << endl;
             }
 
-          if (ref_vel < 0.01){
+          if (closest_car_speed < 0.01){
             ref_vel += 1;
           }
+          cout << "closest_car_speed: " << closest_car_speed << endl;
+          cout << "ref_vel: " << ref_vel << endl;
           
-          
-        
-
-
 
           /////////////////////////////// LANE FOLLOWING /////////////////////////////
 
@@ -307,7 +321,7 @@ int main() {
 
           // Get 3 waiy points ahead of the starting reference
           //double buffer = 30;
-          double distance_buffer = 50;
+          double distance_buffer = 30;
           vector<double> next_wp0 = getXY(car_s+distance_buffer,(2+4*lane),map_waypoints_s,map_waypoints_x,map_waypoints_y);
           vector<double> next_wp1 = getXY(car_s+distance_buffer*2,(2+4*lane),map_waypoints_s,map_waypoints_x,map_waypoints_y);
           vector<double> next_wp2 = getXY(car_s+distance_buffer*3,(2+4*lane),map_waypoints_s,map_waypoints_x,map_waypoints_y);
@@ -352,7 +366,7 @@ int main() {
           }
 
           // calculate how to break up the spline points so that we travel at our desired reference velocity
-          double target_x = 50; // largest x in the spline
+          double target_x = 100; // largest x in the spline
           double target_y = s(target_x);
           double target_dist = sqrt((target_x)*(target_x)+(target_y)*(target_y));
           double x_add_on = 0;
