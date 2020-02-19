@@ -6,14 +6,14 @@ Self-Driving Car Engineer Nanodegree Program
 At every time step the car cosiders 3 possible trajectories (one for each lane).
 The cost of being in each lane is calculated in order to decide the <b>"best lane"</b>. The cost function is as follows:
  
- <i>Cost<sub>Lane</sub> = SUM (car<sub>i</sub>), for each car within range</i>
+ ![Cost Function](/images/cost.png)
+ where <i>x</i> is distance of other cars to our car within a certain range;
 
- Cars within range are those closer than 30 meter from the from of the car or 20 meters from the back of the car. Ideally the cost should be proportional to how close the other vehicles are to the car, but this function does well enough for our purpose. 
+ Cars within range are those closer than 40 meter from the from of the car or 15 meters from the back of the car. This prevents the car from picking a best lane that has other cars close by. 
 
  The lane with the lowest cost is assigned as the best lane. If all lanes have the same cost, the middle lane is preffered. If we are not currently in the best lane we will switch to it only if the following conditions are met:
- - the <b>best lane</b> is only 1 lane away from the <b>current lane</b>
- - the <b>best lane</b> doesn't have any cars 10 meters ahead or behind our current position
- - Our speed is at least 30 mph
+ - the <b>all_clear</b> flag is set. Meaning that we are not very close to another car
+ - Our speed is at least 40 mph
 
  If the conditions are not met we will stay in our current lane until they are.
 

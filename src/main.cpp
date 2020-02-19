@@ -119,6 +119,12 @@ int main() {
           //////////////////////////////////// COST FUNCTION //////////////////////////////////////
           //////////////////////////////////// COST FUNCTION //////////////////////////////////////
           //////////////////////////////////// COST FUNCTION //////////////////////////////////////
+          /*
+            For each lane, calculate the cost function.
+            The cost is a modified sigmoid function. The costs for each lane increases if there are
+            other cars nearby in that given lane. The costs is also proportinal to the distance of those
+            cars to our car
+          */
 
           // Calculate cost for each lane
           for (int i=0; i<3; i++)
@@ -133,6 +139,7 @@ int main() {
             double other_car_x_vel = car[0][1];
             double other_car_y_vel = car[0][1];
             
+              // If the car is within a relevant range, add it to the cost for this lane
               if ((other_car_d - 2 < ((temp_d*4) + 2) && other_car_d  + 2 > ((temp_d*4) + 2))  
                   && (other_car_s - car_s <= 40) && (other_car_s - car_s > - 15))
                   {
@@ -171,6 +178,12 @@ int main() {
           // Only consider changing lanes if the best lane is next to the current lane
           if (fabs(diff) <= 1.2 && fabs(diff) >= 0.001 && ref_vel > 40 && all_clear)
           {
+            lane += diff * 0.08;
+          }
+
+          if (fabs(diff) <= 0.3 && fabs(diff) >= 0.001)
+          {
+            cout << "centering..." << endl;
             lane += diff * 0.07;
           }
 
@@ -218,7 +231,6 @@ int main() {
           double closest_car_speed = max_speed;
           for (auto car = sensor_fusion.begin(); car < sensor_fusion.end(); car ++)
           {
-            double sother_car_id = car[0][0];
             double sother_car_d = car[0][6];
             double sother_car_s = car[0][5];
             double sother_car_x_vel = car[0][3];
@@ -228,44 +240,35 @@ int main() {
             
 
             // There are cars close to me
-
-
             if ((sother_car_d - 2 < car_d && sother_car_d  + 2 > car_d)  
                 && (sother_car_s - car_s <= 35) && (sother_car_s - car_s > 0))
             {
-              closest_car_speed = sother_car_speed;
-              
-              //slow_down = 1;
+              closest_car_speed = sother_car_speed; // This isn't supper accurate
             }
             
-
-
-
             if ((sother_car_d - 1 < car_d && sother_car_d  + 1 > car_d)  
                 && (sother_car_s - car_s <= 20) && (sother_car_s - car_s > 0))
             {
-              //closest_car_speed = sother_car_speed;
               slow_down = 1;
               all_clear = 0;
             }
+
+            // There are no cars nearby
             else
             {
               all_clear = 1;
             }
           }
 
+          // Spead up
           if (slow_down == 0 && ref_vel < max_speed && ref_vel < closest_car_speed){
             ref_vel +=1;
-            //cout << "speeding up" << endl;
           }
  
-          // slow down util we match the speed of the closest car in front of us
+         // Slow down
           else if (slow_down && ref_vel + 2 >= closest_car_speed)
             {
             ref_vel -= .8;
-
-             
-            //cout << "slowing down" << endl;
             }
 
           if (closest_car_speed < 0.01){
