@@ -177,15 +177,16 @@ int main() {
 
           // Only consider changing lanes if the best lane is next to the current lane
           int best_lane_int = int(round(best_lane));
+          int lane_int = int(round(lane));
           if (fabs(diff) <= 1.2 && fabs(diff) >= 0.001 && ref_vel > 10 && costs[best_lane_int] < 0.6)
           {
-            lane += diff * 0.07;
+            lane += diff * 0.05;
           }
 
-          else if (fabs(diff) <= 0.3 && fabs(diff) >= 0.001)
+          else if (fabs(diff) <= 0.1 && fabs(diff) >= 0.001 || (lane_int - lane) < 0.01)
           {
             cout << "centering..." << endl;
-            lane += diff * 0.07;
+            lane += diff * 0.05;
           }
 
           ///////////// DEBUG /////////////
