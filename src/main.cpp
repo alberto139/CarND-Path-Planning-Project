@@ -176,7 +176,8 @@ int main() {
           
 
           // Only consider changing lanes if the best lane is next to the current lane
-          if (fabs(diff) <= 1.2 && fabs(diff) >= 0.001 && ref_vel > 40 && all_clear)
+          int best_lane_int = int(round(best_lane));
+          if (fabs(diff) <= 1.2 && fabs(diff) >= 0.001 && ref_vel > 40 && all_clear && costs[best_lane_int] < 0.3)
           {
             lane += diff * 0.08;
           }
