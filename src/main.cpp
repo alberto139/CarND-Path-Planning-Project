@@ -177,7 +177,7 @@ int main() {
 
           // Only consider changing lanes if the best lane is next to the current lane
           int best_lane_int = int(round(best_lane));
-          if (fabs(diff) <= 1.2 && fabs(diff) >= 0.001 && ref_vel > 40 && all_clear && costs[best_lane_int] < 0.3)
+          if (fabs(diff) <= 1.2 && fabs(diff) >= 0.001 && ref_vel > 40 && all_clear && costs[best_lane_int] < 0.5)
           {
             lane += diff * 0.08;
           }
@@ -274,7 +274,7 @@ int main() {
             ref_vel -= .8;
             }
 
-          if (closest_car_speed < 0.01){
+          if (closest_car_speed < 0.01 && ref_vel < max_speed){
             ref_vel += 1;
           }
           cout << "closest_car_speed: " << closest_car_speed << endl;
