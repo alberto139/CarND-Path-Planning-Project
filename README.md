@@ -7,7 +7,8 @@ At every time step the car cosiders 3 possible trajectories (one for each lane).
 The cost of being in each lane is calculated in order to decide the <b>"best lane"</b>. The cost function is as follows:
  
  ![Cost Function](/images/cost.png)
- where <i>x</i> is distance of other cars to our car within a certain range;
+ 
+ where <i>x</i> is distance of other cars to our car within a certain range.
 
  Cars within range are those closer than 40 meter from the from of the car or 15 meters from the back of the car. This prevents the car from picking a best lane that has other cars close by. 
 

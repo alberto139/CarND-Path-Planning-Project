@@ -244,13 +244,14 @@ int main() {
                 && (sother_car_s - car_s <= 35) && (sother_car_s - car_s > 0))
             {
               closest_car_speed = sother_car_speed; // This isn't supper accurate
+              all_clear = 0;
             }
             
             if ((sother_car_d - 1 < car_d && sother_car_d  + 1 > car_d)  
                 && (sother_car_s - car_s <= 20) && (sother_car_s - car_s > 0))
             {
               slow_down = 1;
-              all_clear = 0;
+              
             }
 
             // There are no cars nearby
