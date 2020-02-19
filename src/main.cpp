@@ -58,7 +58,7 @@ int main() {
    // starting lane
   double lane = 1;
   double best_lane = 1;
-  double max_speed = 49;
+  double max_speed = 47;
   // reference target velocity
   double ref_vel = 0; // mph
   bool in_lane_change = 0;
@@ -178,13 +178,13 @@ int main() {
           // Only consider changing lanes if the best lane is next to the current lane
           int best_lane_int = int(round(best_lane));
           int lane_int = int(round(lane));
-          if (fabs(diff) <= 1.12 && fabs(diff) >= 0.001 && ref_vel > 10 && costs[best_lane_int] < 0.7)
+          if (fabs(diff) <= 1.12 && fabs(diff) >= 0.001 && ref_vel > 10 && costs[best_lane_int] < 0.3)
           {
             lane += diff * 0.05;
           }
 
-          double cte =  (lane_int - lane);
-          if (fabs(diff) <= 0.9 && fabs(diff) >= 0.001 || cte < 0.1)
+          double cte =  fabs(lane_int - lane);
+          if (cte > 0.1)
           {
             cout << "centering..." << endl;
             lane += diff * 0.05;
@@ -331,7 +331,7 @@ int main() {
 
           // Get 3 waiy points ahead of the starting reference
           //double buffer = 30;
-          double distance_buffer = 30;
+          double distance_buffer = 35;
           vector<double> next_wp0 = getXY(car_s+distance_buffer,(2+4*lane),map_waypoints_s,map_waypoints_x,map_waypoints_y);
           vector<double> next_wp1 = getXY(car_s+distance_buffer*2,(2+4*lane),map_waypoints_s,map_waypoints_x,map_waypoints_y);
           vector<double> next_wp2 = getXY(car_s+distance_buffer*3,(2+4*lane),map_waypoints_s,map_waypoints_x,map_waypoints_y);
@@ -376,7 +376,7 @@ int main() {
           }
 
           // calculate how to break up the spline points so that we travel at our desired reference velocity
-          double target_x = 50; // largest x in the spline
+          double target_x = 60; // largest x in the spline
           double target_y = s(target_x);
           double target_dist = sqrt((target_x)*(target_x)+(target_y)*(target_y));
           double x_add_on = 0;
